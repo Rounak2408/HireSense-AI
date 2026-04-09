@@ -6,7 +6,7 @@ import streamlit as st
 from sqlalchemy.orm import Session
 
 from database.models import JobDescription, PublicResumeSubmission, User
-from services.analytics_service import screening_history
+from services.analytics_service import resume_analysis_history, screening_history
 from services.insights_service import cohort_skill_stats
 from ui.components import empty_state, kpi_card, page_header, skill_chips
 
@@ -146,18 +146,76 @@ def render(db: Session, user: User) -> None:
                 )
         return
 
-    # candidate
+    # candidate / admin-lite view
     st.caption("Understand fit before you apply. Sharper resumes win shortlists.")
-    empty_state(
-        "Your resume intelligence starts here",
-        "Use **Resume Checker** to generate a premium match report (skills, experience, education), gap analysis, and actionable suggestions.",
-        "Navigate to **Resume checker** and analyze a target JD.",
-    )
-    st.markdown("#### This week")
-    st.markdown(
-        """
+    rows = resume_analysis_history(db, user.id, limit=12)
+
+    recent_match = rows[0]["match_percent"] if rows else 0.0
+    best_match = max((r["match_percent"] for r in rows), default=0.0)
+    strong_count = sum(1 for r in rows if (r.get("match_percent") or 0) >= 72.0)
+    analyses_count = len(rows)
+    c1, c2, c3, c4 = st.columns(4)
+    with c1:
+        kpi_card("Analyses run", str(analyses_count), "History", tone="positive" if analyses_count else "neutral")
+    with c2:
+        kpi_card("Recent match", f"{recent_match:.1f}%" if analyses_count else "—", "Latest", tone="neutral")
+    with c3:
+        kpi_card("Best match", f"{best_match:.1f}%" if analyses_count else "—", "Peak", tone="positive" if best_match >= 72 else "neutral")
+    with c4:
+        kpi_card("Strong reports", str(strong_count), "72%+", tone="positive" if strong_count else "neutral")
+
+    left, right = st.columns([1.2, 1.0], gap="large")
+    with left:
+        st.markdown("#### Recent resume intelligence reports")
+        if not rows:
+            empty_state(
+                "Your resume intelligence starts here",
+                "Use **Resume Checker** to generate a premium match report (skills, experience, education), gap analysis, and actionable suggestions.",
+                "Navigate to **Resume checker** and analyze a target JD.",
+            )
+        else:
+            for r in rows[:6]:
+                tone = "ok" if (r.get("match_percent") or 0) >= 72 else ("warn" if (r.get("match_percent") or 0) >= 55 else "bad")
+                st.markdown(
+                    f"""
+                    <div class="hs-card">
+                      <span class="hs-badge {tone}">{r.get("strength") or "Report"}</span>
+                      <h4 style="margin-top:0.55rem;">Match score: {float(r.get("match_percent") or 0):.1f}%</h4>
+                      <div class="hs-muted">{r.get("created_at")} · Analysis ID #{r.get("id")}</div>
+                      <div class="hs-muted" style="margin-top:.35rem;">{r.get("preview_jd") or "—"}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    with right:
+        st.markdown("#### Profile improvement lane")
+        st.markdown(
+            """
+            <div class="hs-card">
+              <span class="hs-badge">Action Plan</span>
+              <h4 style="margin-top:0.55rem;">How to increase shortlisting chances</h4>
+              <div class="hs-muted">Use these quick wins before your next application.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        skill_chips(
+            [
+                "Quantified impact bullets",
+                "Role-matched keywords",
+                "Project depth",
+                "ATS-safe headings",
+                "Outcome-focused summaries",
+                "Domain-specific stack proof",
+            ],
+            limit=12,
+        )
+        st.markdown("#### This week")
+        st.markdown(
+            """
 - Quantify wins (latency, revenue, accuracy)
 - Mirror the JD’s stack without keyword stuffing
 - Surface leadership examples if the JD signals seniority
 """
-    )
+        )
