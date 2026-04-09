@@ -38,9 +38,18 @@ def _base_css(vars_block: str) -> str:
       {vars_block}
     }}
 
+    html, body {{
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }}
+
     .stApp {{
       background: var(--hs-bg);
       color: var(--hs-fg);
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }}
 
     .stApp, .stApp p, .stApp span, .stApp label, .stMarkdown, .stCaption {{
@@ -651,8 +660,19 @@ def _base_css(vars_block: str) -> str:
     }}
 
     @media (max-width: 900px) {{
+      div[data-testid="stAppViewContainer"],
+      div[data-testid="stMain"],
+      div[data-testid="stMainBlockContainer"] {{
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }}
+
       .block-container {{
-        padding: 0.45rem 0.72rem 1.05rem 0.72rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0.45rem 0.5rem 1.05rem 0.5rem !important;
       }}
 
       .hs-hero {{
@@ -704,6 +724,12 @@ def _base_css(vars_block: str) -> str:
       .stTabs [data-baseweb="tab-list"] {{
         overflow-x: auto;
         white-space: nowrap;
+      }}
+
+      /* Streamlit may reserve a left gutter for sidebar control on small screens. */
+      div[data-testid="collapsedControl"] {{
+        margin-left: 0 !important;
+        left: 0.25rem !important;
       }}
     }}
 
