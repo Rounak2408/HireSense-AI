@@ -660,6 +660,21 @@ def _base_css(vars_block: str) -> str:
     }}
 
     @media (max-width: 900px) {{
+      /* Force main viewport to never reserve left space for sidebar state. */
+      div[data-testid="stAppViewContainer"],
+      div[data-testid="stAppViewContainer"] > .main,
+      div[data-testid="stMain"],
+      section[data-testid="stMain"],
+      div[data-testid="stMainBlockContainer"] {{
+        margin-left: 0 !important;
+        left: 0 !important;
+        inset-inline-start: 0 !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+      }}
+
       div[data-testid="stAppViewContainer"],
       div[data-testid="stMain"],
       div[data-testid="stMainBlockContainer"] {{
@@ -762,7 +777,20 @@ def _base_css(vars_block: str) -> str:
       /* Streamlit may reserve a left gutter for sidebar control on small screens. */
       div[data-testid="collapsedControl"] {{
         margin-left: 0 !important;
-        left: 0.25rem !important;
+        padding-left: 0 !important;
+        left: 0.2rem !important;
+        position: fixed !important;
+        z-index: 1000 !important;
+        width: auto !important;
+        min-width: 0 !important;
+      }}
+
+      /* Sidebar hidden state should not consume layout width on mobile. */
+      section[data-testid="stSidebar"][aria-expanded="false"] {{
+        min-width: 0 !important;
+        max-width: 0 !important;
+        width: 0 !important;
+        border-right: none !important;
       }}
     }}
 
