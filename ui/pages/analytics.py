@@ -14,7 +14,7 @@ from ui.components import empty_state, page_header, skill_chips
 
 
 def render(db: Session, user: User) -> None:
-    if user.role != "recruiter":
+    if user.role not in {"recruiter", "admin"}:
         st.warning("Recruiter access only.")
         return
 

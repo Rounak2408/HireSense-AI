@@ -326,7 +326,7 @@ def main_app(user: User) -> None:
         st.session_state.theme = "dark"
         st.rerun()
 
-    if user.role == "recruiter":
+    if user.role in {"recruiter", "admin"}:
         st.sidebar.caption("Recruiter workspace")
         nav = st.sidebar.radio(
             "Navigate",
@@ -338,12 +338,6 @@ def main_app(user: User) -> None:
                 "Intelligence · Resume checker",
                 "Archive · History",
             ],
-        )
-    elif user.role == "admin":
-        st.sidebar.caption("Admin workspace")
-        nav = st.sidebar.radio(
-            "Navigate",
-            options=["Overview · Dashboard"],
         )
     else:
         st.sidebar.caption("Candidate workspace")

@@ -12,17 +12,16 @@ from ui.components import empty_state, kpi_card, page_header, skill_chips
 
 
 def render(db: Session, user: User) -> None:
-    if user.role == "admin":
-        _render_admin_public_intake(db)
-        return
-
     page_header(
         "Command center",
         "A high-signal view of pipeline health, shortlists, and role quality.",
         pill="HireSense Intelligence",
     )
-    if user.role == "recruiter":
+    if user.role in {"recruiter", "admin"}:
         _render_recruiter_dashboard(db, user)
+        if user.role == "admin":
+            st.markdown("---")
+            _render_admin_public_intake(db)
         return
     _render_candidate_dashboard(db, user)
 
@@ -120,11 +119,8 @@ def _render_recruiter_dashboard(db: Session, user: User) -> None:
 
 
 def _render_admin_public_intake(db: Session) -> None:
-    page_header(
-        "Public Intake Command Center",
-        "Review direct candidate submissions and update final screening status.",
-        pill="Admin Moderation",
-    )
+    st.markdown("### Public Intake Command Center")
+    st.caption("Review direct candidate submissions and update final screening status.")
     rows = (
         db.query(PublicResumeSubmission)
         .order_by(PublicResumeSubmission.created_at.desc())
