@@ -8,7 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from config.settings import settings
 from database.models import User
 
-ALLOWED_ROLES = {"recruiter", "candidate", "admin"}
+ALLOWED_ROLES = {"candidate", "admin"}
 
 
 def hash_password(plain: str) -> str:
@@ -41,19 +41,11 @@ def create_user(
     if role_normalized not in ALLOWED_ROLES:
         raise ValueError("Invalid role selected.")
 
-    # Admin account is locked to the configured owner email only.
-    if role_normalized == "admin":
-        owner_email = (settings.ADMIN_EMAIL or "").strip().lower()
-        if owner_email:
-            if email_normalized != owner_email:
-                raise ValueError("Only the configured owner email can be admin.")
-            existing_admin = db.query(User).filter(User.role == "admin", User.email != owner_email).first()
-            if existing_admin:
-                raise ValueError("Admin role is locked and cannot be assigned to additional users.")
-        else:
-            existing_admin = db.query(User).filter(User.role == "admin").first()
-            if existing_admin:
-                raise ValueError("Only one admin account is allowed.")
+    owner_email = (settings.ADMIN_EMAIL or "").strip().lower()
+    if role_normalized == "admin" and email_normalized != owner_email:
+        raise ValueError("Only configured admin email can have admin access.")
+    if role_normalized != "admin":
+        role_normalized = "candidate"
 
     user = User(
         email=email_normalized,
@@ -69,7 +61,10 @@ def create_user(
 
 
 def authenticate(db: Session, username: str, password: str) -> User | None:
-    user = get_user_by_username(db, username.strip())
+    login = username.strip()
+    user = get_user_by_username(db, login)
+    if not user and "@" in login:
+        user = get_user_by_email(db, login)
     if not user or not user.is_active:
         return None
     if not verify_password(password, user.password_hash):
@@ -79,21 +74,44 @@ def authenticate(db: Session, username: str, password: str) -> User | None:
 
 def enforce_admin_lock(db: Session) -> None:
     owner_email = (settings.ADMIN_EMAIL or "").strip().lower()
+    owner_password = settings.ADMIN_PASSWORD or ""
     changed = False
-    if owner_email:
-        owner = db.query(User).filter(User.email == owner_email).first()
-        if owner and owner.role != "admin":
+    if not owner_email:
+        # Without configured owner email, hard-lock all accounts to candidate.
+        users = db.query(User).all()
+        for u in users:
+            if u.role != "candidate":
+                u.role = "candidate"
+                changed = True
+        if changed:
+            db.commit()
+        return
+
+    owner = db.query(User).filter(User.email == owner_email).first()
+    if owner:
+        if owner.role != "admin":
             owner.role = "admin"
             changed = True
-
-        non_owner_admins = db.query(User).filter(User.role == "admin", User.email != owner_email).all()
-        for u in non_owner_admins:
-            u.role = "recruiter"
+        if owner_password and not verify_password(owner_password, owner.password_hash):
+            owner.password_hash = hash_password(owner_password)
             changed = True
-    else:
-        admins = db.query(User).filter(User.role == "admin").order_by(User.id.asc()).all()
-        for extra_admin in admins[1:]:
-            extra_admin.role = "recruiter"
+    elif owner_password:
+        derived_username = owner_email.split("@", 1)[0]
+        owner = User(
+            email=owner_email,
+            username=derived_username,
+            password_hash=hash_password(owner_password),
+            role="admin",
+            full_name="Admin",
+            is_active=True,
+        )
+        db.add(owner)
+        changed = True
+
+    others = db.query(User).filter(User.email != owner_email).all()
+    for u in others:
+        if u.role != "candidate":
+            u.role = "candidate"
             changed = True
 
     if changed:

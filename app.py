@@ -90,7 +90,6 @@ def auth_shell() -> User | None:
             email = st.text_input("Email", key="s_mail", placeholder="you@company.com")
             username = st.text_input("Choose username", key="s_user", placeholder="choose a workspace username")
             full = st.text_input("Full name (optional)", key="s_fn", placeholder="your full name")
-            role = st.selectbox("Role", options=["recruiter", "candidate"])
             p1 = st.text_input("Password", type="password", key="s_p1", placeholder="create a secure password")
             p2 = st.text_input("Confirm password", type="password", key="s_p2", placeholder="re-enter password")
             if st.button("Create account"):
@@ -107,7 +106,7 @@ def auth_shell() -> User | None:
                             email=email,
                             username=username,
                             password=p1,
-                            role=role,
+                            role="candidate",
                             full_name=full or None,
                         )
                         st.success("Account created — please sign in.")
@@ -303,7 +302,7 @@ def main_app(user: User) -> None:
         st.session_state.theme = "dark"
         st.rerun()
 
-    if user.role == "recruiter":
+    if user.role in {"recruiter", "admin"}:
         st.sidebar.caption("Recruiter workspace")
         nav = st.sidebar.radio(
             "Navigate",
