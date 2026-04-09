@@ -22,7 +22,7 @@ st.set_page_config(
     page_title="HireSense AI",
     page_icon="🎯",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 if "theme" not in st.session_state:
@@ -55,53 +55,51 @@ def auth_shell() -> User | None:
         unsafe_allow_html=True,
     )
 
-    left_pad, center, right_pad = st.columns([1, 1.15, 1], gap="large")
-    with center:
-        st.markdown('<div class="hs-auth-card hs-auth-centered">', unsafe_allow_html=True)
-        st.markdown('<div class="hs-auth-brand-line">HireSense</div>', unsafe_allow_html=True)
-        auth_mode = st.radio(
-            "Auth mode",
-            options=["Log in", "Sign up"],
-            horizontal=True,
-            key="auth_mode_switch",
-            label_visibility="collapsed",
-        )
-        db = get_db()
-        try:
-            if auth_mode == "Log in":
-                u = st.text_input("Email / Username", key="l_user", placeholder="Enter your email address")
-                p = st.text_input("Password", type="password", key="l_pass", placeholder="Enter your password")
-                if st.button("Sign in", type="primary"):
-                    user = auth_service.authenticate(db, u, p)
-                    if not user:
-                        st.error("Invalid credentials.")
-                    else:
-                        st.session_state.user_id = user.id
-                        st.session_state.username = user.username
-                        st.session_state.role = user.role
-                        st.session_state.full_name = user.full_name or user.username
-                        st.rerun()
-            else:
-                email = st.text_input("Email", key="s_mail", placeholder="you@company.com")
-                username = st.text_input("Choose username", key="s_user", placeholder="choose a workspace username")
-                full = st.text_input("Full name (optional)", key="s_fn", placeholder="your full name")
-                role = st.selectbox("Role", options=["recruiter", "candidate"])
-                p1 = st.text_input("Password", type="password", key="s_p1", placeholder="create a secure password")
-                p2 = st.text_input("Confirm password", type="password", key="s_p2", placeholder="re-enter password")
-                if st.button("Create account"):
-                    if not email or not username or not p1:
-                        st.error("Email, username, and password are required.")
-                    elif p1 != p2:
-                        st.error("Passwords do not match.")
-                    elif auth_service.get_user_by_email(db, email) or auth_service.get_user_by_username(db, username):
-                        st.error("User already exists.")
-                    else:
-                        auth_service.create_user(db, email=email, username=username, password=p1, role=role, full_name=full or None)
-                        st.success("Account created — please sign in.")
-        finally:
-            st.markdown("</div>", unsafe_allow_html=True)
-            db.close()
-        _guest_resume_preview()
+    st.markdown('<div class="hs-auth-card hs-auth-centered">', unsafe_allow_html=True)
+    st.markdown('<div class="hs-auth-brand-line">HireSense</div>', unsafe_allow_html=True)
+    auth_mode = st.radio(
+        "Auth mode",
+        options=["Log in", "Sign up"],
+        horizontal=True,
+        key="auth_mode_switch",
+        label_visibility="collapsed",
+    )
+    db = get_db()
+    try:
+        if auth_mode == "Log in":
+            u = st.text_input("Email / Username", key="l_user", placeholder="Enter your email address")
+            p = st.text_input("Password", type="password", key="l_pass", placeholder="Enter your password")
+            if st.button("Sign in", type="primary"):
+                user = auth_service.authenticate(db, u, p)
+                if not user:
+                    st.error("Invalid credentials.")
+                else:
+                    st.session_state.user_id = user.id
+                    st.session_state.username = user.username
+                    st.session_state.role = user.role
+                    st.session_state.full_name = user.full_name or user.username
+                    st.rerun()
+        else:
+            email = st.text_input("Email", key="s_mail", placeholder="you@company.com")
+            username = st.text_input("Choose username", key="s_user", placeholder="choose a workspace username")
+            full = st.text_input("Full name (optional)", key="s_fn", placeholder="your full name")
+            role = st.selectbox("Role", options=["recruiter", "candidate"])
+            p1 = st.text_input("Password", type="password", key="s_p1", placeholder="create a secure password")
+            p2 = st.text_input("Confirm password", type="password", key="s_p2", placeholder="re-enter password")
+            if st.button("Create account"):
+                if not email or not username or not p1:
+                    st.error("Email, username, and password are required.")
+                elif p1 != p2:
+                    st.error("Passwords do not match.")
+                elif auth_service.get_user_by_email(db, email) or auth_service.get_user_by_username(db, username):
+                    st.error("User already exists.")
+                else:
+                    auth_service.create_user(db, email=email, username=username, password=p1, role=role, full_name=full or None)
+                    st.success("Account created — please sign in.")
+    finally:
+        st.markdown("</div>", unsafe_allow_html=True)
+        db.close()
+    _guest_resume_preview()
     return None
 
 

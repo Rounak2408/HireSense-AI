@@ -725,8 +725,17 @@ def _base_css(vars_block: str) -> str:
       }}
 
       section[data-testid="stSidebar"] {{
-        min-width: 84vw !important;
-        max-width: 84vw !important;
+        min-width: 76vw !important;
+        max-width: 76vw !important;
+      }}
+
+      .hs-auth-card {{
+        padding: 0.85rem 0.82rem 0.8rem 0.82rem;
+      }}
+
+      .hs-auth-brand-line {{
+        margin-bottom: 0.45rem;
+        font-size: 0.78rem;
       }}
     }}
     </style>
