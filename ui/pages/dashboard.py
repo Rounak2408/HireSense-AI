@@ -17,7 +17,7 @@ def render(db: Session, user: User) -> None:
         "A high-signal view of pipeline health, shortlists, and role quality.",
         pill="HireSense Intelligence",
     )
-    if user.role == "recruiter":
+    if user.role in {"recruiter", "admin"}:
         hist = screening_history(db, user.id, limit=8)
         active_roles = len(hist)
         total_cands = sum(h.get("candidates") or 0 for h in hist)

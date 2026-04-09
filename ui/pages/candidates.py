@@ -15,7 +15,7 @@ from ui.components import empty_state, insight_cards, kpi_card, page_header, pro
 
 
 def render(db: Session, user: User) -> None:
-    if user.role != "recruiter":
+    if user.role not in {"recruiter", "admin"}:
         st.warning("Recruiter access only.")
         return
 
