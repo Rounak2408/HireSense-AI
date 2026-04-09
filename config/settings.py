@@ -21,6 +21,7 @@ class Settings:
     UPLOAD_DIR: Path = PROJECT_ROOT / os.getenv("UPLOAD_DIR", "uploads")
     MAX_UPLOAD_MB: int = int(os.getenv("MAX_UPLOAD_MB", "25"))
     ENV: str = os.getenv("APP_ENV", "development")
+    ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "")
 
 
 settings = Settings()

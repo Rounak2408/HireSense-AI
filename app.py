@@ -18,6 +18,8 @@ from ui.pages import analytics, candidates, dashboard, history, resume_checker, 
 from ui.theme import inject_theme, theme_toggle
 from utils.text_utils import normalize_skill
 
+_GENERIC_ROLE_TOKENS = {"developer", "engineer", "intern", "fresher", "lead", "senior", "junior", "expert"}
+
 st.set_page_config(
     page_title="HireSense AI",
     page_icon="🎯",
@@ -36,6 +38,11 @@ def get_db() -> Session:
 def require_init() -> None:
     try:
         init_db()
+        db = get_db()
+        try:
+            auth_service.enforce_admin_lock(db)
+        finally:
+            db.close()
     except Exception as exc:  # pragma: no cover - connection errors at runtime
         st.error(f"Database initialization failed: {exc}")
         st.stop()
@@ -94,8 +101,18 @@ def auth_shell() -> User | None:
                 elif auth_service.get_user_by_email(db, email) or auth_service.get_user_by_username(db, username):
                     st.error("User already exists.")
                 else:
-                    auth_service.create_user(db, email=email, username=username, password=p1, role=role, full_name=full or None)
-                    st.success("Account created — please sign in.")
+                    try:
+                        auth_service.create_user(
+                            db,
+                            email=email,
+                            username=username,
+                            password=p1,
+                            role=role,
+                            full_name=full or None,
+                        )
+                        st.success("Account created — please sign in.")
+                    except ValueError as exc:
+                        st.error(str(exc))
     finally:
         st.markdown("</div>", unsafe_allow_html=True)
         db.close()
@@ -248,12 +265,27 @@ def _public_candidate_intake() -> None:
 
 def _keyword_match_percent(candidate_skills: list[str], keywords_text: str) -> float:
     raw_keys = [k.strip().lower() for k in keywords_text.replace("\n", ",").split(",") if k.strip()]
-    key_set = {normalize_skill(k) for k in raw_keys}
-    skill_set = {normalize_skill(s) for s in candidate_skills if s}
-    if not key_set:
+    key_set = {normalize_skill(k) for k in raw_keys if normalize_skill(k)}
+    skill_set = {normalize_skill(s) for s in candidate_skills if normalize_skill(s)}
+    if not key_set or not skill_set:
         return 0.0
-    matched = len(key_set & skill_set)
-    return (matched / len(key_set)) * 100.0
+
+    # Support flexible keyword matching (phrase, token, and partial overlap)
+    # so terms like "fullstack developers" can still match "fullstack", "react", etc.
+    skill_tokens: set[str] = set()
+    for sk in skill_set:
+        skill_tokens.update(tok for tok in sk.split() if tok and tok not in _GENERIC_ROLE_TOKENS)
+
+    matched_count = 0
+    for key in key_set:
+        key_tokens = [tok for tok in key.split() if tok and tok not in _GENERIC_ROLE_TOKENS]
+        phrase_hit = key in skill_set
+        partial_hit = any((key in sk or sk in key) for sk in skill_set if len(sk) >= 3)
+        token_hit = bool(key_tokens) and all(tok in skill_tokens for tok in key_tokens)
+        if phrase_hit or partial_hit or token_hit:
+            matched_count += 1
+
+    return (matched_count / len(key_set)) * 100.0
 
 
 def main_app(user: User) -> None:

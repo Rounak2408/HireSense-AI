@@ -33,7 +33,14 @@ def extract_phones(text: str) -> list[str]:
 
 def normalize_skill(name: str) -> str:
     s = (name or "").strip().lower()
+    s = re.sub(r"[^a-z0-9+#.\-\s]", " ", s)
     s = re.sub(r"[\s_]+", " ", s)
+    s = re.sub(r"\bdevelopers?\b", "developer", s)
+    s = re.sub(r"\bengineers?\b", "engineer", s)
+    s = re.sub(r"\bfull\s*stack\b", "fullstack", s)
+    s = re.sub(r"\bfront\s*end\b", "frontend", s)
+    s = re.sub(r"\bback\s*end\b", "backend", s)
+    s = s.strip()
     synonyms = {
         "postgresql": "postgres",
         "k8s": "kubernetes",
@@ -41,6 +48,11 @@ def normalize_skill(name: str) -> str:
         "js": "javascript",
         "ts": "typescript",
         "ml": "machine learning",
+        "full stack": "fullstack",
+        "full stack developer": "fullstack",
+        "fullstack developer": "fullstack",
+        "mern stack": "mern",
+        "mean stack": "mean",
     }
     return synonyms.get(s, s)
 
