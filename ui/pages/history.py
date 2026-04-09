@@ -13,7 +13,7 @@ def render(db: Session, user: User) -> None:
     st.markdown("### History")
     tab_a, tab_b = st.tabs(["Role screenings", "Resume analyses"])
     with tab_a:
-        if user.role not in {"recruiter", "admin"}:
+        if user.role != "recruiter":
             st.info("Screening history is available to recruiter accounts.")
         else:
             hist = screening_history(db, user.id, limit=60)
