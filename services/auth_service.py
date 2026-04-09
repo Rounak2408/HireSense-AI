@@ -62,10 +62,15 @@ def create_user(
 
 def authenticate(db: Session, username: str, password: str) -> User | None:
     login = username.strip()
+    owner_email = (settings.ADMIN_EMAIL or "").strip().lower()
+    login_normalized = login.lower()
+
     user = get_user_by_username(db, login)
     if not user and "@" in login:
         user = get_user_by_email(db, login)
     if not user or not user.is_active:
+        return None
+    if user.role == "admin" and owner_email and login_normalized != owner_email:
         return None
     if not verify_password(password, user.password_hash):
         return None
