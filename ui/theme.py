@@ -692,8 +692,25 @@ def _base_css(vars_block: str) -> str:
         font-size: 2rem;
       }}
 
+      .hs-auth-shell p {{
+        font-size: 0.9rem;
+        line-height: 1.45;
+        padding: 0 0.2rem;
+      }}
+
       .hs-auth-centered {{
         max-width: 100%;
+      }}
+
+      .hs-auth-card {{
+        border-radius: 16px;
+        padding: 0.8rem 0.75rem 0.78rem 0.75rem;
+      }}
+
+      .hs-auth-brand-line {{
+        padding: 0.36rem 0.55rem;
+        font-size: 0.76rem;
+        letter-spacing: 0.06em;
       }}
 
       .hs-card {{
@@ -719,6 +736,22 @@ def _base_css(vars_block: str) -> str:
 
       .stButton > button {{
         width: 100% !important;
+        min-height: 42px;
+        border-radius: 12px !important;
+      }}
+
+      .stTextInput input,
+      .stSelectbox div[data-baseweb="select"] > div {{
+        min-height: 42px !important;
+        font-size: 0.95rem !important;
+      }}
+
+      .stFileUploader > div {{
+        border-radius: 12px !important;
+      }}
+
+      .stFileUploader [data-testid="stFileUploaderDropzone"] {{
+        padding: 0.45rem 0.5rem !important;
       }}
 
       .stTabs [data-baseweb="tab-list"] {{
@@ -734,6 +767,10 @@ def _base_css(vars_block: str) -> str:
     }}
 
     @media (max-width: 640px) {{
+      .block-container {{
+        padding: 0.35rem 0.42rem 0.9rem 0.42rem !important;
+      }}
+
       .hs-brand {{
         font-size: 1.12rem;
       }}
@@ -747,7 +784,7 @@ def _base_css(vars_block: str) -> str:
       }}
 
       .hs-auth-preview-card {{
-        padding: 0.8rem;
+        padding: 0.72rem;
       }}
 
       section[data-testid="stSidebar"] {{
@@ -756,12 +793,46 @@ def _base_css(vars_block: str) -> str:
       }}
 
       .hs-auth-card {{
-        padding: 0.85rem 0.82rem 0.8rem 0.82rem;
+        border-radius: 14px;
+        padding: 0.72rem 0.68rem 0.7rem 0.68rem;
       }}
 
       .hs-auth-brand-line {{
-        margin-bottom: 0.45rem;
-        font-size: 0.78rem;
+        margin-bottom: 0.4rem;
+        font-size: 0.72rem;
+        padding: 0.32rem 0.5rem;
+      }}
+
+      .hs-auth-shell {{
+        margin: 0.45rem auto 0.55rem auto;
+      }}
+
+      .hs-auth-shell h1 {{
+        font-size: 1.7rem;
+      }}
+
+      .hs-auth-shell p {{
+        max-width: 95%;
+        font-size: 0.86rem;
+        line-height: 1.4;
+      }}
+
+      .hs-auth-glow {{
+        width: min(520px, 96vw);
+        height: 150px;
+        filter: blur(14px);
+      }}
+
+      .stTextInput input,
+      .stSelectbox div[data-baseweb="select"] > div {{
+        min-height: 40px !important;
+        border-radius: 10px !important;
+        font-size: 0.92rem !important;
+      }}
+
+      .stButton > button {{
+        min-height: 40px;
+        font-size: 0.95rem !important;
       }}
     }}
     </style>
