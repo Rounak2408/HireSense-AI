@@ -50,6 +50,7 @@ def require_init() -> None:
 
 def auth_shell() -> User | None:
     require_init()
+    st.session_state.setdefault("signup_success_popup", False)
     st.markdown(
         """
         <div class="hs-auth-shell">
@@ -72,6 +73,7 @@ def auth_shell() -> User | None:
         label_visibility="collapsed",
     )
     db = get_db()
+    show_guest_preview = auth_mode == "Log in"
     try:
         if auth_mode == "Log in":
             u = st.text_input("Email / Username", key="l_user", placeholder="Enter your email address")
@@ -109,13 +111,35 @@ def auth_shell() -> User | None:
                             role="candidate",
                             full_name=full or None,
                         )
-                        st.success("Account created — please sign in.")
+                        st.session_state.signup_success_popup = True
+                        st.session_state.auth_mode_switch = "Log in"
+                        st.rerun()
                     except ValueError as exc:
                         st.error(str(exc))
     finally:
         st.markdown("</div>", unsafe_allow_html=True)
         db.close()
-    _guest_resume_preview()
+
+    if st.session_state.get("signup_success_popup"):
+        st.markdown(
+            """
+            <div class="hs-signup-popup-wrap">
+              <div class="hs-signup-popup-card">
+                <div class="hs-signup-popup-badge">Premium Access</div>
+                <h3>Successfully Signed Up</h3>
+                <p>Please log in for deep analysis.</p>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Continue to Login", type="primary", key="hs_close_signup_popup"):
+            st.session_state.signup_success_popup = False
+            st.session_state.auth_mode_switch = "Log in"
+            st.rerun()
+
+    if show_guest_preview:
+        _guest_resume_preview()
     return None
 
 

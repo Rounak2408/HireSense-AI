@@ -408,6 +408,51 @@ def _base_css(vars_block: str) -> str:
       pointer-events: none;
     }}
 
+    .hs-signup-popup-wrap {{
+      position: relative;
+      margin: 0.6rem auto 0.9rem auto;
+      max-width: 540px;
+      animation: hsFadeIn .3s ease-out;
+    }}
+
+    .hs-signup-popup-card {{
+      border: 1px solid var(--hs-border);
+      border-radius: 18px;
+      padding: 0.95rem 1rem;
+      background: linear-gradient(140deg, rgba(99,102,241,.18), rgba(34,211,238,.08));
+      box-shadow: 0 14px 34px rgba(79,70,229,.28), inset 0 1px 0 rgba(255,255,255,.08);
+      text-align: center;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }}
+
+    .hs-signup-popup-badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--hs-border);
+      background: var(--hs-surface);
+      border-radius: 999px;
+      padding: 0.2rem 0.58rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--hs-muted);
+    }}
+
+    .hs-signup-popup-card h3 {{
+      margin: 0.45rem 0 0.25rem 0;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+    }}
+
+    .hs-signup-popup-card p {{
+      margin: 0;
+      color: var(--hs-muted);
+      font-size: 0.92rem;
+    }}
+
     .hs-mobile-wall {{
       display: none !important;
     }}
@@ -829,6 +874,19 @@ def _base_css(vars_block: str) -> str:
         margin-bottom: 0.4rem;
         font-size: 0.72rem;
         padding: 0.32rem 0.5rem;
+      }}
+
+      .hs-signup-popup-card {{
+        border-radius: 14px;
+        padding: 0.75rem 0.8rem;
+      }}
+
+      .hs-signup-popup-card h3 {{
+        font-size: 1.02rem;
+      }}
+
+      .hs-signup-popup-card p {{
+        font-size: 0.84rem;
       }}
 
       .hs-auth-shell {{
