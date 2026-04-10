@@ -28,10 +28,9 @@ def theme_toggle() -> None:
 def _base_css(vars_block: str) -> str:
     return f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
-
+    /* Avoid external @import (blocked offline / strict browsers can stall CSS parsing). */
     html, body, [class*="css"]  {{
-      font-family: 'DM Sans', system-ui, sans-serif;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }}
 
     :root {{
@@ -50,18 +49,25 @@ def _base_css(vars_block: str) -> str:
       width: 100%;
       max-width: 100%;
       overflow-x: hidden;
+      position: relative;
+      isolation: isolate;
+    }}
+
+    .stApp::before,
+    .stApp::after {{
+      display: none !important;
+      content: none !important;
     }}
 
     .stApp, .stApp p, .stApp span, .stApp label, .stMarkdown, .stCaption {{
       color: var(--hs-fg);
     }}
 
-    /* Remove Streamlit default black top header strip */
+    /* Keep header layout intact (height:0 broke some Streamlit versions — blank main area). */
     header[data-testid="stHeader"] {{
       background: transparent !important;
       border-bottom: none !important;
       box-shadow: none !important;
-      height: 0 !important;
     }}
 
     div[data-testid="stToolbar"] {{
@@ -69,19 +75,13 @@ def _base_css(vars_block: str) -> str:
       top: 0.35rem !important;
     }}
 
-    /* Hide Streamlit top-right deploy/menu controls */
-    div[data-testid="stToolbar"],
-    div[data-testid="stDecoration"],
-    div[data-testid="stStatusWidget"] {{
-      display: none !important;
-      visibility: hidden !important;
-    }}
-
     /* Layout rhythm */
     .block-container {{
       padding-top: 0.55rem !important;
       padding-bottom: 2.0rem !important;
       max-width: 1250px;
+      position: relative;
+      z-index: 1;
     }}
 
     section[data-testid="stSidebar"] {{
@@ -101,9 +101,9 @@ def _base_css(vars_block: str) -> str:
       background: var(--hs-card);
       border: 1px solid var(--hs-border);
       border-radius: 18px;
-      padding: 1.25rem 1.35rem;
+      padding: 1.35rem 1.45rem;
       box-shadow: var(--hs-shadow);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.78rem;
       position: relative;
       overflow: hidden;
     }}
@@ -115,6 +115,125 @@ def _base_css(vars_block: str) -> str:
       pointer-events: none;
       border-radius: inherit;
       background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0));
+    }}
+
+    .hs-card:hover {{
+      transform: translateY(-2px);
+      transition: transform .2s ease, box-shadow .2s ease;
+      box-shadow: 0 24px 48px rgba(0,0,0,.32);
+    }}
+
+    .hs-workspace-headline {{
+      margin: 0.32rem 0 1.35rem 0;
+      padding: 1.05rem 1.1rem;
+      border: 1px solid var(--hs-border);
+      border-radius: 18px;
+      background: linear-gradient(125deg, rgba(124,58,237,.16), rgba(6,182,212,.08));
+      box-shadow: var(--hs-shadow-soft);
+    }}
+
+    .hs-workspace-kicker {{
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--hs-muted);
+      font-weight: 700;
+      margin-bottom: .28rem;
+    }}
+
+    .hs-workspace-subline {{
+      font-size: .98rem;
+      line-height: 1.5;
+      color: var(--hs-fg);
+      opacity: .95;
+    }}
+
+    .hs-panel-shell {{
+      border: 1px solid var(--hs-border);
+      border-radius: 20px;
+      padding: 1.08rem 1.08rem 0.62rem 1.08rem;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      box-shadow: var(--hs-shadow-soft);
+      margin-bottom: 1.08rem;
+    }}
+
+    .hs-input-panel {{
+      border-color: rgba(99,102,241,.24);
+    }}
+
+    .hs-ai-panel {{
+      border-color: rgba(34,211,238,.24);
+    }}
+
+    .hs-readiness-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .55rem;
+      margin: .2rem 0 .35rem 0;
+    }}
+
+    .hs-readiness-grid > div {{
+      border: 1px solid var(--hs-border);
+      border-radius: 10px;
+      padding: .5rem .58rem;
+      background: var(--hs-surface);
+      font-size: .83rem;
+      color: var(--hs-fg);
+    }}
+
+    .hs-file-preview-chip {{
+      display: inline-flex;
+      margin-top: .18rem;
+      border: 1px solid var(--hs-border);
+      border-radius: 999px;
+      padding: .2rem .52rem;
+      background: rgba(16,185,129,.14);
+      color: #a7f3d0;
+      font-size: .74rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }}
+
+    .hs-ai-suggestion-card {{
+      border-color: rgba(99,102,241,.28);
+      background: linear-gradient(145deg, rgba(99,102,241,.13), rgba(15,23,42,.5));
+    }}
+
+    .hs-empty-illustrated {{
+      border-style: dashed;
+      border-color: rgba(148,163,184,.34);
+      background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(15,23,42,.42));
+    }}
+
+    .hs-hero-score {{
+      border-color: rgba(34,211,238,.35);
+      background: linear-gradient(135deg, rgba(99,102,241,.2), rgba(34,211,238,.1) 45%, rgba(15,23,42,.42));
+      box-shadow: 0 26px 44px rgba(0,0,0,.34), 0 0 0 1px rgba(255,255,255,.05) inset;
+    }}
+
+    .hs-score-kicker {{
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--hs-muted);
+      font-weight: 700;
+      margin-bottom: .15rem;
+    }}
+
+    .hs-score-main {{
+      font-size: clamp(2.0rem, 3.8vw, 3.0rem);
+      line-height: 1.0;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: .12rem 0 .22rem 0;
+      color: #dbeafe;
+      text-shadow: 0 0 24px rgba(59,130,246,.28);
+    }}
+
+    .hs-score-sub {{
+      font-size: .9rem;
+      color: var(--hs-fg);
+      opacity: .92;
     }}
 
     .hs-surface {{
@@ -473,6 +592,7 @@ def _base_css(vars_block: str) -> str:
       color: var(--hs-fg) !important;
       font-weight: 600 !important;
       transition: all .18s ease !important;
+      min-height: 40px;
     }}
 
     .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {{
@@ -584,12 +704,21 @@ def _base_css(vars_block: str) -> str:
       font-weight: 700 !important;
       letter-spacing: 0.01em;
       box-shadow: 0 10px 24px rgba(79,70,229,0.35), 0 0 0 1px rgba(255,255,255,0.08) inset;
+      border-radius: 12px !important;
     }}
 
     .stButton > button:hover {{
       transform: translateY(-1px);
       transition: all .18s ease;
       box-shadow: 0 14px 26px rgba(0,0,0,0.22);
+    }}
+
+    div[data-testid="stDataFrame"] * {{
+      font-size: .88rem !important;
+    }}
+
+    div[data-testid="stDataFrame"] [role="row"] {{
+      border-bottom: 1px solid rgba(148,163,184,.12);
     }}
 
     /* Dataframes */
@@ -700,6 +829,11 @@ def _base_css(vars_block: str) -> str:
       to {{ opacity: 1; transform: translateY(0) scale(1); }}
     }}
 
+    @keyframes hsDrift {{
+      from {{ transform: translate3d(0, 0, 0) scale(1); }}
+      to {{ transform: translate3d(-2%, 2%, 0) scale(1.04); }}
+    }}
+
     @media (max-width: 1100px) {{
       .hs-auth-shell h1 {{ font-size: 2.4rem; }}
     }}
@@ -773,9 +907,22 @@ def _base_css(vars_block: str) -> str:
         letter-spacing: 0.06em;
       }}
 
+      .hs-workspace-headline {{
+        padding: .74rem .78rem;
+      }}
+
+      .hs-panel-shell {{
+        border-radius: 14px;
+        padding: .68rem .64rem .4rem .64rem;
+      }}
+
+      .hs-score-main {{
+        font-size: 2.15rem;
+      }}
+
       .hs-card {{
         border-radius: 14px;
-        padding: 0.85rem 0.9rem;
+        padding: 0.95rem 0.92rem;
       }}
 
       div[data-testid="stMetric"] {{

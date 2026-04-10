@@ -6,6 +6,18 @@ Run: streamlit run app.py
 from __future__ import annotations
 
 import streamlit as st
+
+# Streamlit must run set_page_config before other Streamlit API usage anywhere in this run.
+st.set_page_config(
+    page_title="HireSense AI",
+    page_icon="🎯",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
 from sqlalchemy.orm import Session
 
 from database import init_db
@@ -15,20 +27,10 @@ from services import auth_service
 from services.resume_parser import parse_resume_bytes
 from ui.components import brand_header, mobile_wall
 from ui.pages import analytics, candidates, dashboard, history, resume_checker, upload_screening
-from ui.theme import inject_theme, theme_toggle
+from ui.theme import theme_toggle
 from utils.text_utils import normalize_skill
 
 _GENERIC_ROLE_TOKENS = {"developer", "engineer", "intern", "fresher", "lead", "senior", "junior", "expert"}
-
-st.set_page_config(
-    page_title="HireSense AI",
-    page_icon="🎯",
-    layout="wide",
-    initial_sidebar_state="auto",
-)
-
-if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
 
 
 def get_db() -> Session:
@@ -44,7 +46,13 @@ def require_init() -> None:
         finally:
             db.close()
     except Exception as exc:  # pragma: no cover - connection errors at runtime
-        st.error(f"Database initialization failed: {exc}")
+        st.error("Database initialization failed. Check that the database is reachable.")
+        st.code(str(exc), language=None)
+        st.info(
+            "Tip: With no `.env` file, the app uses SQLite at `hiresense_local.db` in the project folder. "
+            "For PostgreSQL, set `DATABASE_URL` in `.env` (see `.env.example`).",
+            icon="💡",
+        )
         st.stop()
 
 
@@ -79,9 +87,9 @@ def auth_shell() -> User | None:
             u = st.text_input("Email / Username", key="l_user", placeholder="Enter your email address")
             p = st.text_input("Password", type="password", key="l_pass", placeholder="Enter your password")
             if st.button("Sign in", type="primary"):
-                user = auth_service.authenticate(db, u, p)
+                user = auth_service.authenticate(db, (u or "").strip(), p or "")
                 if not user:
-                    st.error("Invalid credentials.")
+                    st.error("Wrong email/username or password. Check caps lock and try again.")
                 else:
                     st.session_state.user_id = user.id
                     st.session_state.username = user.username
@@ -95,21 +103,25 @@ def auth_shell() -> User | None:
             p1 = st.text_input("Password", type="password", key="s_p1", placeholder="create a secure password")
             p2 = st.text_input("Confirm password", type="password", key="s_p2", placeholder="re-enter password")
             if st.button("Create account"):
-                if not email or not username or not p1:
+                email_clean = (email or "").strip()
+                username_clean = (username or "").strip()
+                if not email_clean or not username_clean or not p1:
                     st.error("Email, username, and password are required.")
                 elif p1 != p2:
                     st.error("Passwords do not match.")
-                elif auth_service.get_user_by_email(db, email) or auth_service.get_user_by_username(db, username):
-                    st.error("User already exists.")
+                elif auth_service.get_user_by_email(db, email_clean):
+                    st.error("This email is already registered. Try logging in.")
+                elif auth_service.get_user_by_username(db, username_clean):
+                    st.error("This username is already taken. Pick another.")
                 else:
                     try:
                         auth_service.create_user(
                             db,
-                            email=email,
-                            username=username,
+                            email=email_clean,
+                            username=username_clean,
                             password=p1,
                             role="candidate",
-                            full_name=full or None,
+                            full_name=(full or "").strip() or None,
                         )
                         st.session_state.signup_success_popup = True
                         st.session_state.auth_mode_switch = "Log in"
@@ -314,7 +326,6 @@ def _keyword_match_percent(candidate_skills: list[str], keywords_text: str) -> f
 def main_app(user: User) -> None:
     brand_header()
     theme_toggle()
-    inject_theme()
     mobile_wall()
     st.sidebar.text_input("Quick search", placeholder="Search candidate / skill / JD", key="hs_sidebar_search")
     st.sidebar.markdown("---")
@@ -331,35 +342,39 @@ def main_app(user: User) -> None:
         nav = st.sidebar.radio(
             "Navigate",
             options=[
-                "Overview · Dashboard",
-                "Intake · Upload",
-                "Pipeline · Candidates",
-                "Insights · Analytics",
-                "Intelligence · Resume checker",
-                "Archive · History",
+                "Dashboard",
+                "Candidates",
+                "Analytics",
+                "Reports",
+                "Settings",
+                "Resume Checker",
+                "Upload",
             ],
         )
     else:
         st.sidebar.caption("Candidate workspace")
         nav = st.sidebar.radio(
             "Navigate",
-            options=["Overview · Dashboard", "Intelligence · Resume checker", "Archive · History"],
+            options=["Dashboard", "Reports", "Resume Checker"],
         )
 
     db = get_db()
     try:
-        if nav.endswith("Dashboard"):
+        if nav == "Dashboard":
             dashboard.render(db, user)
-        elif nav.endswith("Upload"):
+        elif nav == "Upload":
             upload_screening.render(db, user)
-        elif nav.endswith("Candidates"):
+        elif nav == "Candidates":
             candidates.render(db, user)
-        elif nav.endswith("Analytics"):
+        elif nav == "Analytics":
             analytics.render(db, user)
-        elif nav.endswith("Resume checker"):
+        elif nav == "Resume Checker":
             resume_checker.render(db, user)
-        elif nav.endswith("History"):
+        elif nav == "Reports":
             history.render(db, user)
+        elif nav == "Settings":
+            st.subheader("Settings")
+            st.caption("Workspace preferences, team controls, and integrations will be available here.")
     finally:
         db.close()
 
@@ -379,13 +394,10 @@ def main() -> None:
     user = load_user()
     if not user:
         brand_header()
-        theme_toggle()
-        inject_theme()
         mobile_wall()
         auth_shell()
         return
     main_app(user)
 
 
-if __name__ == "__main__":
-    main()
+main()

@@ -11,11 +11,13 @@ load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
+_SQLITE_DEFAULT = PROJECT_ROOT / "hiresense_local.db"
+
 
 class Settings:
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql+psycopg2://postgres:postgres@localhost:5432/hiresense",
+        f"sqlite:///{_SQLITE_DEFAULT.as_posix()}",
     )
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-change-me-in-production")
     UPLOAD_DIR: Path = PROJECT_ROOT / os.getenv("UPLOAD_DIR", "uploads")

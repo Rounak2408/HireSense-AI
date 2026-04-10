@@ -1,5 +1,11 @@
 [server]
 maxUploadSize = 50
+enableCORS = false
+# Local development: avoid websocket/origin mismatch issues between localhost and 127.0.0.1
+enableXsrfProtection = false
+address = "127.0.0.1"
 
 [browser]
 gatherUsageStats = false
+serverAddress = "127.0.0.1"
+serverPort = 8501

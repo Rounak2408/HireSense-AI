@@ -1,3 +1,15 @@
+.env
+hiresense_local.db
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.streamlit/secrets.toml
+uploads/
+.venv/
+terminals/
+agent-tools/
 .venv/
 __pycache__/
 *.pyc

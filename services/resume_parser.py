@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 import pdfplumber
 
@@ -29,28 +30,40 @@ class ParsedResume:
 
 
 _YEAR_RANGE_RE = re.compile(
-    r"(19|20)\d{2}\s*[-–—]\s*(19|20)\d{2}|(19|20)\d{2}\s*[-–—]\s*(present|current|now)",
+    r"((?:19|20)\d{2})\s*[-–—]\s*((?:19|20)\d{2}|present|current|now)",
     re.I,
 )
-_YEAR_SINGLE_RE = re.compile(r"(19|20)\d{2}")
+_YEAR_SINGLE_RE = re.compile(r"(?:19|20)\d{2}")
 
 
 def _estimate_years_experience(text: str) -> float | None:
     if not text:
         return None
+    current_year = datetime.utcnow().year
     spans: list[tuple[int, int]] = []
     for m in _YEAR_RANGE_RE.finditer(text):
-        years = [int(y) for y in _YEAR_SINGLE_RE.findall(m.group(0))]
-        if len(years) < 2:
+        start_raw, end_raw = m.group(1), m.group(2)
+        try:
+            start_year = int(start_raw)
+        except Exception:
             continue
-        spans.append((min(years), max(years)))
+        if re.match(r"present|current|now", (end_raw or "").lower()):
+            end_year = current_year
+        else:
+            try:
+                end_year = int(end_raw)
+            except Exception:
+                continue
+        if end_year < start_year:
+            start_year, end_year = end_year, start_year
+        spans.append((start_year, end_year))
     if spans:
-        total = sum(max(0, hi - lo) for lo, hi in spans)
-        return max(1.0, min(30.0, total * 0.7))
+        total_years = sum(max(0, hi - lo) for lo, hi in spans)
+        return max(0.5, min(30.0, total_years * 0.7))
     # fallback: count year mentions in experience-like chunk
     years = [int(y) for y in _YEAR_SINGLE_RE.findall(text)]
     if len(years) >= 2:
-        return max(1.0, min(30.0, (max(years) - min(years)) * 0.6))
+        return max(0.5, min(30.0, (max(years) - min(years)) * 0.6))
     return None
 
 

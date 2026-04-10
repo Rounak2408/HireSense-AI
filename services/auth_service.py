@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -20,11 +22,17 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def get_user_by_username(db: Session, username: str) -> User | None:
-    return db.query(User).filter(User.username == username).first()
+    u = (username or "").strip()
+    if not u:
+        return None
+    return db.query(User).filter(func.lower(User.username) == u.lower()).first()
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
-    return db.query(User).filter(User.email == email.lower()).first()
+    e = (email or "").strip().lower()
+    if not e:
+        return None
+    return db.query(User).filter(func.lower(User.email) == e).first()
 
 
 def create_user(
@@ -37,7 +45,10 @@ def create_user(
     full_name: str | None = None,
 ) -> User:
     role_normalized = (role or "").strip().lower()
-    email_normalized = email.lower().strip()
+    email_normalized = (email or "").strip().lower()
+    username_normalized = (username or "").strip()
+    if not email_normalized or not username_normalized:
+        raise ValueError("Email and username are required.")
     if role_normalized not in ALLOWED_ROLES:
         raise ValueError("Invalid role selected.")
 
@@ -49,19 +60,25 @@ def create_user(
 
     user = User(
         email=email_normalized,
-        username=username.strip(),
+        username=username_normalized,
         password_hash=hash_password(password),
         role=role_normalized,
         full_name=(full_name or "").strip() or None,
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    try:
+        db.commit()
+        db.refresh(user)
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("This email or username is already registered.") from None
     return user
 
 
 def authenticate(db: Session, username: str, password: str) -> User | None:
-    login = username.strip()
+    login = (username or "").strip()
+    if not login:
+        return None
     owner_email = (settings.ADMIN_EMAIL or "").strip().lower()
     login_normalized = login.lower()
 
